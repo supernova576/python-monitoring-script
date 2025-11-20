@@ -1,24 +1,22 @@
 {
-    "ynsjk_services": {
+    "serviceMonitoring": {
+        "is_active": true,
         "hostname": "{{ host_name }}",
-        "service_list": ["ssh", "apache2", "mysql", "docker", "cron"],
-        "dns_ip": "x.x.x.x",
-        "swap_limit_in_mb": 150,
-        "swappiness_max": 26,
-        "journal_max_size_in_mb": 500,
-        "nas_ip": "x.x.x.x",
-        "path_to_nfs_share": "/mnt/",
-        "max_storage_used_in_percent": 80
+        "service_list": ["ssh", "apache2", "mysql", "docker", "cron"]
     },
-    "ynsjk_file_monitoring": {
+    "fileMonitoring": {
         "db_path": "/root/scripts/files.json",
         "files_to_monitor": ["/etc/hosts", "/etc/resolv.conf", "/etc/passwd", "/etc/shadow", "/etc/services", "/etc/crontab", "/etc/sysctl.conf", "/etc/fstab", "/root/scripts/ynsjk_monitoring.py", "/root/scripts/ynsjk_monitoring.json", "/etc/ssh/sshd_config"]
     },
-    "mail": {
+    "mailgun": {
         "webroot": "https://api.mailgun.net/v3/sandbox234979blahblahblah.mailgun.org/messages",
         "username": "api",
         "api_key": "key-blahblahblahblahblahblah",
         "from": "Hostname <monitoring_script@your.domain>",
         "to": "your@mail.com"
+    },
+    "logging": {
+        "log_file_path": "/var/log/monitoring_script.log",
+        "log_level": "INFO"
     }
 }
