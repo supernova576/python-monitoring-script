@@ -1,6 +1,3 @@
-from pathlib import Path
-import json
-
 class log:
 
     def __init__(self, path_to_log_file: str) -> None:

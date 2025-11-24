@@ -5,10 +5,22 @@
         "service_list": ["ssh", "apache2", "mysql", "docker", "cron"]
     },
     "fileMonitoring": {
-        "db_path": "/root/scripts/files.json",
-        "files_to_monitor": ["/etc/hosts", "/etc/resolv.conf", "/etc/passwd", "/etc/shadow", "/etc/services", "/etc/crontab", "/etc/sysctl.conf", "/etc/fstab", "/root/scripts/ynsjk_monitoring.py", "/root/scripts/ynsjk_monitoring.json", "/etc/ssh/sshd_config"]
+        "is_active": true,
+        "db_path": "/root/files.db.json",
+        "files_to_monitor": [
+            "/etc/hosts", 
+            "/etc/resolv.conf", 
+            "/etc/passwd", 
+            "/etc/shadow", 
+            "/etc/services", 
+            "/etc/crontab", 
+            "/etc/sysctl.conf", 
+            "/etc/fstab", 
+            "/etc/ssh/sshd_config"
+        ]
     },
     "mailgun": {
+        "is_active": true,
         "webroot": "https://api.mailgun.net/v3/sandbox234979blahblahblah.mailgun.org/messages",
         "username": "api",
         "api_key": "key-blahblahblahblahblahblah",
@@ -18,5 +30,9 @@
     "logging": {
         "log_file_path": "/var/log/monitoring_script.log",
         "log_level": "INFO"
+    },
+    "db": {
+        "is_active": true,
+        "db_path": "/root/monitoring_script_results.db"
     }
 }

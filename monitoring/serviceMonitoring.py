@@ -10,24 +10,24 @@ class serviceMonitoring:
     def __init__(self) -> None:
         try:
             # -- Get config-parameters --
-            path = Path(__file__).parent.absolute()
-            with open(f"{path}/conf.json", "r") as f:
+            path = Path(__file__).resolve().parent / "conf.json"
+
+            with open(f"{path}", "r") as f:
                 j = json.loads(f.read())
 
-                self.is_active: bool = j["is_active"]
-                self.hostname:str = j["hostname"]
-                self.apt_service_list:list = j["service_list"]
+                self.is_active: bool = j["serviceMonitoring"]["is_active"]
+                self.hostname: str = j["serviceMonitoring"]["hostname"]
+                self.apt_service_list: list = j["serviceMonitoring"]["service_list"]
 
                 self.path_to_log_file: str = j["logging"]["log_file_path"]
                 self.logger = logger(self.path_to_log_file)
 
             # -------------------------------------------------------
 
-            self.logger.info("serviceMonitoring: Initialized successfully.")
+            self.logger.warning("serviceMonitoring: Initialized successfully.")
         except Exception:
             self.logger.error("serviceMonitoring/__init__: {0}".format(traceback.format_exc()))
             adieu(1)
-
     
     def __check_if_module_is_active(self) -> None:
         try:
