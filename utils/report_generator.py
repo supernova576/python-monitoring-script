@@ -54,7 +54,14 @@ class reportGenerator:
 
         base = Path(self.path_to_reports)
         # ensure base exists
-        base.mkdir(parents=True, exist_ok=True)
+        base.mkdir(mode=0o777, parents=True, exist_ok=True)
+        try:
+            os.chmod(str(base), 0o777)
+        except Exception:
+            try:
+                self.logger.warning(f"reportGenerator: Could not set permissions on directory {base}")
+            except Exception:
+                pass
 
         date_str = datetime.now().strftime("%Y_%m_%d")
         folder_name = f"report_{date_str}"
@@ -64,11 +71,25 @@ class reportGenerator:
             candidate = base / f"{folder_name}_{idx}"
             idx += 1
 
-        candidate.mkdir(parents=True, exist_ok=False)
+        candidate.mkdir(mode=0o777, parents=True, exist_ok=False)
+        try:
+            os.chmod(str(candidate), 0o777)
+        except Exception:
+            try:
+                self.logger.warning(f"reportGenerator: Could not set permissions on directory {candidate}")
+            except Exception:
+                pass
         self.report_root = candidate
         self.markdown_dir = self.report_root 
         self.plots_dir = self.report_root / "plots"
-        self.plots_dir.mkdir()
+        self.plots_dir.mkdir(mode=0o777)
+        try:
+            os.chmod(str(self.plots_dir), 0o777)
+        except Exception:
+            try:
+                self.logger.warning(f"reportGenerator: Could not set permissions on directory {self.plots_dir}")
+            except Exception:
+                pass
         self.logger.info(f"reportGenerator: Created report dirs at {self.report_root}")
     
     def __check_if_module_is_active(self) -> None:
@@ -126,8 +147,24 @@ class reportGenerator:
             out_path = Path(self.plots_dir) / fname
         except Exception:
             out_path = Path(self.path_to_reports) / fname
-        out_path.parent.mkdir(parents=True, exist_ok=True)
+        out_path.parent.mkdir(mode=0o777, parents=True, exist_ok=True)
+        try:
+            os.chmod(str(out_path.parent), 0o777)
+        except Exception:
+            try:
+                self.logger.warning(f"reportGenerator: Could not set permissions on directory {out_path.parent}")
+            except Exception:
+                pass
         fig.savefig(str(out_path), bbox_inches="tight")
+        try:
+            # ensure file is world-writable/executable as requested
+            os.chmod(str(out_path), 0o777)
+        except Exception:
+            # log but don't fail
+            try:
+                self.logger.warning(f"reportGenerator: Could not set permissions on {out_path}")
+            except Exception:
+                pass
         plt.close(fig)
         return str(out_path)
 
@@ -432,6 +469,13 @@ class reportGenerator:
         md_text = "\n".join(lines)
         with open(out_md, "w", encoding="utf-8") as f:
             f.write(md_text)
+        try:
+            os.chmod(out_md, 0o777)
+        except Exception:
+            try:
+                self.logger.warning(f"reportGenerator: Could not set permissions on {out_md}")
+            except Exception:
+                pass
         return out_md
 
     def generate_report(self) -> None:
