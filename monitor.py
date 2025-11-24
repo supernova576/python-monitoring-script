@@ -24,6 +24,18 @@ def display_help() -> None:
     Export Options:
     --generate-report   Generate a Markdown-report from the collected data
 
+    Cleanup Options:
+        Logs:
+        --delete-logs                   Delete all log files created during monitoring
+
+        Result-Database:
+        --delete-results-service        Delete all service result files created during monitoring
+        --delete-results-file           Delete all file result files created during monitoring
+        --delete-results-host           Delete all host result files created during monitoring
+        --delete-all-results            Delete all result files created during monitoring
+
+        File-Monitoring Database:
+        --delete-file-monitoring-db     Delete the entire file-monitoring database
     """
     print(help_message)
 
@@ -58,7 +70,31 @@ def main():
             report_gen = reportGenerator()
             report_gen.generate_report()
 
-        if not any(arg in sys.argv for arg in ["--service", "--host", "--file", "--all", "--generate-report"]):
+        if "--delete-logs" in sys.argv:
+            logger.info("Deleting log files...")
+            logger.delete_logs()
+        
+        if "--delete-results-service" in sys.argv or "--delete-all-results" in sys.argv:
+            logger.info("Deleting service monitoring result files...")
+            service_monitor = service_module.serviceMonitoring()
+            service_monitor.delete_service_results()
+
+        if "--delete-results-file" in sys.argv or "--delete-all-results" in sys.argv:
+            logger.info("Deleting file monitoring result files...")
+            file_monitor = file_module.fileMonitoring()
+            file_monitor.delete_file_results()
+
+        if "--delete-results-host" in sys.argv or "--delete-all-results" in sys.argv:
+            logger.info("Deleting host monitoring result files...")
+            host_monitor = host_module.hostMonitoring()
+            host_monitor.delete_host_results()
+
+        if "--delete-file-monitoring-db" in sys.argv:
+            logger.info("Deleting file monitoring database...")
+            file_monitor = file_module.fileMonitoring()
+            file_monitor.delete_file_monitoring_db()
+
+        if not any(arg in sys.argv for arg in ["--service", "--host", "--file", "--all", "--generate-report", "--delete-logs", "--delete-results-service", "--delete-results-file", "--delete-results-host", "--delete-all-results", "--delete-file-monitoring-db"]):
             logger.error("No valid monitoring option provided. Use --help for usage information.")
             display_help()
             adieu(1)

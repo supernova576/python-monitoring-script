@@ -169,3 +169,21 @@ class fileMonitoring:
         except Exception as e:
             self.logger.error("fileMonitoring/check_files: {0}".format(traceback.format_exc()))
             adieu(1)
+    
+    def delete_file_results(self) -> None:
+        try:
+            self.db_conn.delete_db_data("file_checks")
+            self.logger.info("fileMonitoring: File result files deleted successfully.")
+        except Exception as e:
+            self.logger.error(f"fileMonitoring/delete_file_results: An error occurred while deleting file result files: {e}")
+            adieu(1)
+
+    def delete_file_monitoring_db(self) -> None:
+        try:
+            Path(self.db_path).unlink()
+            self.logger.info("fileMonitoring: File monitoring database deleted successfully.")
+        except FileNotFoundError:
+            self.logger.warning("fileMonitoring: File monitoring database not found. Nothing to delete.")
+        except Exception as e:
+            self.logger.error(f"fileMonitoring/delete_file_monitoring_db: An error occurred while deleting file monitoring database: {e}")
+            adieu(1)

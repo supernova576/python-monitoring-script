@@ -209,6 +209,22 @@ class db:
             self.logger.error("sqlite_handler/get_recent_host_checks: {0}".format(traceback.format_exc()))
             adieu(1)
 
+    def delete_db_data(self, table_name: str) -> None:
+        try:
+            if not getattr(self, "is_active", False) or not getattr(self, "conn", None):
+                try:
+                    self.logger.info(f"sqlite_handler: DB disabled - skipping deletion of data from {table_name}")
+                except Exception:
+                    pass
+                return
+
+            self.cursor.execute(f"DELETE FROM {table_name}")
+            self.conn.commit()
+            self.logger.info(f"sqlite_handler: Deleted all data from table {table_name}")
+        except Exception:
+            self.logger.error("sqlite_handler/delete_db_data: {0}".format(traceback.format_exc()))
+            adieu(1)
+
     def __del__(self) -> None:
         try:
             if getattr(self, "conn", None):

@@ -114,3 +114,11 @@ class hostMonitoring:
         except Exception as e:
             self.logger.error("hostMonitoring/check_services: {0}".format(traceback.format_exc()))
             adieu(1)
+
+    def delete_host_results(self) -> None:
+        try:
+            self.db_conn.delete_db_data("host_checks")
+            self.logger.info("hostMonitoring: Host result files deleted successfully.")
+        except Exception as e:
+            self.logger.error(f"hostMonitoring/delete_host_results: An error occurred while deleting host result files: {e}")
+            adieu(1)

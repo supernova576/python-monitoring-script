@@ -2,7 +2,10 @@
     "serviceMonitoring": {
         "is_active": true,
         "hostname": "{{ host_name }}",
-        "service_list": ["ssh", "cron"]
+        "service_list": ["ssh", "cron"],
+        "check_internet_connectivity": true,
+        "check_dns": true,
+        "domain_list": ["example.com", "example.org"]
     },
     "fileMonitoring": {
         "is_active": true,
