@@ -1,4 +1,4 @@
-import utils.log as logger
+from utils.log import log
 from utils.db import db as DB
 
 import json
@@ -12,7 +12,7 @@ class fileMonitoring:
     def __init__(self) -> None:
         try:
             # -- Get config-parameters --
-            path = Path(__file__).resolve().parent / "conf.json"
+            path = Path(__file__).resolve().parent.parent / "conf.json"
 
             with open(f"{path}", "r") as f:
                 j = json.loads(f.read())
@@ -21,15 +21,14 @@ class fileMonitoring:
                 self.db_path: str = j["fileMonitoring"]["db_path"]
                 self.files_to_monitor: list = j["fileMonitoring"]["files_to_monitor"]
 
-                self.path_to_log_file: str = j["logging"]["log_file_path"]
-                self.logger = logger(self.path_to_log_file)
+                self.logger = log()
 
                 # instantiate DB handler (DB may be configured as inactive and will then be a no-op)
                 try:
                     self.db_conn = DB()
                 except Exception:
                     # if DB cannot be initialized do not exit; keep monitoring functional
-                    self.logger.error("fileMonitoring: Could not initialize DB handler; continuing without DB ingestion.")
+                    self.logger.warning("fileMonitoring: Could not initialize DB handler; continuing without DB ingestion.")
                     self.db_conn = None
 
             # -------------------------------------------------------
@@ -57,16 +56,39 @@ class fileMonitoring:
             self.logger.info("fileMonitoring: Generating file hash database...")
 
             file_hashes = {}
+            _error_handler = 0
             for file in self.files_to_monitor:
-                with open(file, "r") as f:
-                    data = f.read()
-                    md5 = hashlib.md5(data.encode("utf-8")).hexdigest()
-                
-                file_hashes[file] = md5
+                # handle per-file read errors (permission denied, missing file, etc.)
+                try:
+                    with open(file, "r") as f:
+                        data = f.read()
+                        md5 = hashlib.md5(data.encode("utf-8")).hexdigest()
+                    file_hashes[file] = md5
+                except PermissionError:
+                    # do not abort the entire run for a single unreadable file
+                    self.logger.warning(f"fileMonitoring: Permission denied reading '{file}'; skipping (hash=None)")
+                    file_hashes[file] = None
+                    _error_handler += 1
+                    continue
+                except FileNotFoundError:
+                    self.logger.warning(f"fileMonitoring: File not found: '{file}'; skipping (hash=None)")
+                    file_hashes[file] = None
+                    _error_handler += 1
+                    continue
+                except Exception:
+                    # other read/IO errors - log and continue
+                    self.logger.warning(f"fileMonitoring: Could not read '{file}': {traceback.format_exc().splitlines()[-1]}; skipping (hash=None)")
+                    file_hashes[file] = None
+                    _error_handler += 1
+                    continue
             self.logger.info("fileMonitoring: File hash database generated successfully.")
 
+            if _error_handler > 0:
+                self.logger.warning(f"fileMonitoring: Completed with {_error_handler} file read errors. Cannot create new hash db")
+                raise Exception("File read errors encountered")
+            
             return file_hashes
-                
+        
         except Exception as e:
             self.logger.error("fileMonitoring/__generate_file_hash_db: {0}".format(traceback.format_exc()))
             adieu(1)
@@ -94,11 +116,11 @@ class fileMonitoring:
                 if old_hashes[file] != new_hashes[file]:
                     self.logger.warning(f"fileMonitoring: File {file} has been modified!")
                     if self.db_conn:
-                        self.db_conn.save_file_check(file, new_hashes[file], True)
+                        self.db_conn.save_file_check(file, new_hashes[file], "true")
                 else:
                     self.logger.info(f"fileMonitoring: File {file} is unchanged.")
                     if self.db_conn:
-                        self.db_conn.save_file_check(file, new_hashes[file], False)
+                        self.db_conn.save_file_check(file, new_hashes[file], "false")
 
             self.logger.info("fileMonitoring: File hash comparison completed.")
         except Exception as e:
@@ -113,6 +135,7 @@ class fileMonitoring:
                 f.write(json.dumps(file_hashes, indent=4))
 
             self.logger.info("fileMonitoring: New file hash database file generated successfully.")
+
         except Exception as e:
             self.logger.error("fileMonitoring/__generate_new_file_hash_db: {0}".format(traceback.format_exc()))
             adieu(1)

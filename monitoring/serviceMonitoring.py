@@ -1,4 +1,5 @@
-import utils.log as logger
+from utils.log import log
+from utils.db import db as DB
 
 import json
 import os
@@ -10,7 +11,7 @@ class serviceMonitoring:
     def __init__(self) -> None:
         try:
             # -- Get config-parameters --
-            path = Path(__file__).resolve().parent / "conf.json"
+            path = Path(__file__).resolve().parent.parent / "conf.json"
 
             with open(f"{path}", "r") as f:
                 j = json.loads(f.read())
@@ -19,12 +20,19 @@ class serviceMonitoring:
                 self.hostname: str = j["serviceMonitoring"]["hostname"]
                 self.apt_service_list: list = j["serviceMonitoring"]["service_list"]
 
-                self.path_to_log_file: str = j["logging"]["log_file_path"]
-                self.logger = logger(self.path_to_log_file)
+                self.logger = log()
+
+                # instantiate DB handler (DB may be configured as inactive and will then be a no-op)
+                try:
+                    self.db_conn = DB()
+                except Exception:
+                    # if DB cannot be initialized do not exit; keep monitoring functional
+                    self.logger.warning("serviceMonitoring: Could not initialize DB handler; continuing without DB ingestion.")
+                    self.db_conn = None
 
             # -------------------------------------------------------
 
-            self.logger.warning("serviceMonitoring: Initialized successfully.")
+            self.logger.info("serviceMonitoring: Initialized successfully.")
         except Exception:
             self.logger.error("serviceMonitoring/__init__: {0}".format(traceback.format_exc()))
             adieu(1)
@@ -50,8 +58,10 @@ class serviceMonitoring:
                 # -- Check with systemctl quiet command, if service is active. If so, returns 0 --
                 if int(os.system("systemctl is-active --quiet {0}".format(service))) == 0:
                     self.logger.info(f"serviceMonitoring: Service {service} is active.")
+                    self.db_conn.save_service_check(service, "active")
                 else:
                     self.logger.warning(f"serviceMonitoring: Service {service} is NOT active")
+                    self.db_conn.save_service_check(service, "inactive")
                 # --------------------------------------------------------------------------------
         except Exception as e:
             self.logger.error("serviceMonitoring/__check_service_statuses: {0}".format(traceback.format_exc()))
