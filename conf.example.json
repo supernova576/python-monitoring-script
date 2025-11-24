@@ -1,0 +1,37 @@
+{
+    "serviceMonitoring": {
+        "is_active": true,
+        "hostname": "{{ host_name }}",
+        "service_list": ["ssh", "cron"]
+    },
+    "fileMonitoring": {
+        "is_active": true,
+        "db_path": "testing/files.db.json",
+        "files_to_monitor": [
+            "/etc/hosts", 
+            "/etc/resolv.conf", 
+            "/etc/passwd", 
+            "/etc/shadow", 
+            "/etc/services", 
+            "/etc/crontab", 
+            "/etc/sysctl.conf", 
+            "/etc/fstab"
+        ]
+    },
+    "hostMonitoring": {
+        "is_active": true
+    },
+    "reportGenerator": {
+        "is_active": true,
+        "root_path": "testing/reports/",
+        "plot_days": 7
+    },
+    "logging": {
+        "log_file_path": "testing/monitoring_script.log",
+        "log_level": "INFO"
+    },
+    "db": {
+        "is_active": true,
+        "db_path": "testing/monitoring_script_results.db"
+    }
+}

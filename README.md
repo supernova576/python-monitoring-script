@@ -33,7 +33,8 @@ python3 monitor.py
 3. Check generated logs and reports in the project or via `utils/report_generator.py`.
 
 ## Configuration
-Edit `conf.json` to specify the targets to monitor. The project uses a small local data store (see `utils/db.py`) to persist state between runs.
+Edit `conf.example.json` to specify the targets to monitor. The project uses a small local data store (see `utils/db.py`) to persist state between runs.$
+Then rename `conf.example.json` to `conf.json` and run the script
 
 ## Development
 - Add or modify monitors in `monitoring/` and update `monitor.py` to include new tasks.

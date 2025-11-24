@@ -1,3 +1,4 @@
 testing/
 monitoring/__pycache__/
 utils/__pycache__/
+conf.json
