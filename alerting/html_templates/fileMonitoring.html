@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="de">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>{{ report_title | default('File Monitoring Report') }}</title>
+        <style>
+            body { font-family: Arial, Helvetica, sans-serif; margin:0; padding:20px; background:#f4f6f8; color:#333; }
+            .container { max-width:800px; margin:0 auto; background:#ffffff; border-radius:6px; box-shadow:0 2px 4px rgba(0,0,0,0.06); overflow:hidden }
+            header { padding:20px 24px; border-bottom:1px solid #eee; background:linear-gradient(90deg,#0b6ea8,#0f9bd6); color:#fff }
+            header h1 { margin:0; font-size:20px; font-weight:600 }
+            header p { margin:6px 0 0 0; font-size:13px; opacity:0.92 }
+            .content { padding:18px 24px }
+            table { width:100%; border-collapse:collapse; margin-top:12px }
+            th, td { text-align:left; padding:10px 8px; border-bottom:1px solid #eee; font-size:13px }
+            th { background:#fafafa; font-weight:600; font-size:13px }
+            .muted { color:#666; font-size:12px }
+            .badge { display:inline-block; padding:4px 8px; border-radius:12px; font-size:12px; color:#fff }
+            .badge-alert { background:#c92424 }
+            .ok { color: #1a8a3e; font-weight:700 }
+            .footer { padding:14px 24px; font-size:12px; color:#666; border-top:1px solid #eee; background:#fafafa }
+            a { color:#0f9bd6; text-decoration:none }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <header>
+                <h1>{{ report_title | default('File Monitoring Alert') }}</h1>
+                <p>Erstellt: {{ generated_at | default('-') }}</p>
+            </header>
+
+            <div class="content">
+                {% set changed_count = (changed_files | length) if changed_files is defined else 0 %}
+                {% if changed_count > 0 %}
+                    <p>Es wurden {{ changed_count }} Datei(en) geändert:</p>
+                    <table role="presentation">
+                        <thead>
+                            <tr>
+                                <th>Datei</th>
+                                <th>Neuer Hash</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        {% for f in changed_files %}
+                            <tr>
+                                <td>{{ f.path }}</td>
+                                <td><code>{{ f.hash }}</code></td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                {% else %}
+                    <p class="ok">Keine Dateiänderungen festgestellt.</p>
+                {% endif %}
+            </div>
+
+            <div class="footer">
+                <div>Dies ist eine automatisch generierte Meldung vom Monitoring-System.</div>
+                {% if footer_note %}<div class="muted">{{ footer_note }}</div>{% endif %}
+            </div>
+        </div>
+    </body>
+</html>

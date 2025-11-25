@@ -30,11 +30,52 @@
         "plot_days": 7
     },
     "logging": {
+        "is_active": true,
         "log_file_path": "testing/monitoring_script.log",
         "log_level": "INFO"
     },
     "db": {
         "is_active": true,
         "db_path": "testing/monitoring_script_results.db"
+    },
+    "alerting": {
+        "rules": {
+            "serviceMonitoring": {
+                "is_active": false
+            },
+            "hostMonitoring": {
+                "is_active": false,
+                "thresholds" : {
+                    "load_average_1": 2,
+                    "load_average_5": 2,
+                    "load_average_15": 2,
+                    "free_ram_mb": 1000,
+                    "swap_used": 100
+                }
+            },
+            "fileMonitoring": {
+                "is_active": false
+            }
+        },
+        "implementation": {
+            "mailgun": {
+                "is_active": true,
+                "webroot": "https://api.mailgun.net/v3/-/messages",
+                "api_key": "-",
+                "recipient": "-",
+                "sender": "Monitoring-Script <monitoring@home.local>"
+            },
+            "smtp": {
+                "is_active": false,
+                "host": "smtp.example.com",
+                "port": 587,
+                "username": "your-user@example.com",
+                "password": "your-password",
+                "use_tls": true,
+                "use_ssl": false,
+                "recipient": "ops@example.com",
+                "sender": "Monitoring-Script <monitoring@yourdomain.local>"
+            }
+        }
     }
 }

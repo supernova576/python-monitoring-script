@@ -1,4 +1,8 @@
+# general Stuff
 testing/
+conf.json
+
+# Pycache
 monitoring/__pycache__/
 utils/__pycache__/
-conf.json
+alerting/__pycache__

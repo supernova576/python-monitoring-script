@@ -1,5 +1,6 @@
 from utils.log import log
 from utils.db import db as DB
+from alerting.mailgunConnector import mailgunConnector
 
 import json
 import os
@@ -7,6 +8,8 @@ from pathlib import Path
 from sys import exit as adieu
 import traceback
 import socket
+from datetime import datetime
+
 
 class serviceMonitoring:
     def __init__(self) -> None:
@@ -35,6 +38,16 @@ class serviceMonitoring:
                     self.logger.warning("serviceMonitoring: Could not initialize DB handler; continuing without DB ingestion.")
                     self.db_conn = None
 
+                # Alerting rule for this module (rule-level) and available implementations
+                try:
+                    self.alerting_is_active: bool = j["alerting"]["rules"]["serviceMonitoring"]["is_active"]
+                except Exception:
+                    self.alerting_is_active = False
+
+                impl = j.get("alerting", {}).get("implementation", {})
+                self.mailgun_alerting_is_active = bool(impl.get("mailgun", {}).get("is_active", False))
+                self.smtp_alerting_is_active = bool(impl.get("smtp", {}).get("is_active", False))
+
             # -------------------------------------------------------
 
             self.logger.info("serviceMonitoring: Initialized successfully.")
@@ -57,16 +70,25 @@ class serviceMonitoring:
     def __check_service_statuses(self) -> None:
         try:
             # -- Iterate from service list --
+            self._inactive_services = []
             for service in self.apt_service_list:
                 self.logger.info(f"serviceMonitoring: Checking service: {service}")
 
                 # -- Check with systemctl quiet command, if service is active. If so, returns 0 --
                 if int(os.system("systemctl is-active --quiet {0}".format(service))) == 0:
                     self.logger.info(f"serviceMonitoring: Service {service} is active.")
-                    self.db_conn.save_service_check(service, "active")
+                    if self.db_conn:
+                        self.db_conn.save_service_check(service, "active")
                 else:
                     self.logger.warning(f"serviceMonitoring: Service {service} is NOT active")
-                    self.db_conn.save_service_check(service, "inactive")
+                    if self.db_conn:
+                        self.db_conn.save_service_check(service, "inactive")
+                    # collect for alerting
+                    self._inactive_services.append({
+                        "name": service,
+                        "host": self.hostname,
+                        "last_state": "inactive"
+                    })
                 # --------------------------------------------------------------------------------
         except Exception as e:
             self.logger.error("serviceMonitoring/__check_service_statuses: {0}".format(traceback.format_exc()))
@@ -120,6 +142,35 @@ class serviceMonitoring:
             self.__check_service_statuses()
             self.__check_dns()
             self.__check_internet_connectivity()
+
+            # -- Alerting: if there are inactive services and alerting is enabled --
+            try:
+                if getattr(self, "_inactive_services", None) and self.alerting_is_active:
+                    ctx = {
+                        "report_title": "Inaktive Services",
+                        "generated_at": datetime.now().strftime("%Y-%m-%d %H:%M"),
+                        "inactive_services": self._inactive_services,
+                        "footer_note": "Automatische Warnung: Überwachte Services sind inaktiv."
+                    }
+
+                    # send to mailgun if configured
+                    if getattr(self, "mailgun_alerting_is_active", False):
+                        try:
+                            mg = mailgunConnector()
+                            mg.mailgunSendMailHTML("Inaktive Services auf {0}".format(self.hostname), "serviceMonitoring", ctx)
+                        except Exception:
+                            self.logger.warning(f"serviceMonitoring: mailgun send failed: {traceback.format_exc()}")
+
+                    # send to smtp if configured
+                    if getattr(self, "smtp_alerting_is_active", False):
+                        try:
+                            from alerting.smtpConnector import smtpConnector
+                            smtp = smtpConnector()
+                            smtp.smtpSendMailHTML("Inaktive Services auf {0}".format(self.hostname), "serviceMonitoring", ctx)
+                        except Exception:
+                            self.logger.warning(f"serviceMonitoring: smtp send failed: {traceback.format_exc()}")
+            except Exception:
+                self.logger.warning(f"serviceMonitoring: Failed to send alert: {traceback.format_exc()}")
 
             self.logger.info("serviceMonitoring: Service checks completed.")
         except Exception as e:

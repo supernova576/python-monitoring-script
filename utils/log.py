@@ -5,19 +5,25 @@ class log:
 
     def __init__(self) -> None:
         with open(Path(__file__).resolve().parent.parent / "conf.json", "r") as f:
-            self.log_file_path: str = json.loads(f.read())["logging"]["log_file_path"]
+            j = json.loads(f.read())
+            
+            self.log_file_path: str = j["logging"]["log_file_path"]
+            self.is_active: bool = j["logging"]["is_active"]
 
     def info(self, message: str) -> None:
-        with open(self.log_file_path, "a") as log_file:
-            log_file.write(f"[INFO] {message}\n")
+        if self.is_active:
+            with open(self.log_file_path, "a") as log_file:
+                log_file.write(f"[INFO] {message}\n")
 
-    def warning(self, message: str) -> None:           
-        with open(self.log_file_path, "a") as log_file:
-            log_file.write(f"[WARNING] {message}\n")
+    def warning(self, message: str) -> None:
+        if self.is_active:       
+            with open(self.log_file_path, "a") as log_file:
+                log_file.write(f"[WARNING] {message}\n")
 
-    def error(self, message: str) -> None:           
-        with open(self.log_file_path, "a") as log_file:
-            log_file.write(f"[ERROR] {message}\n")
+    def error(self, message: str) -> None:
+        if self.is_active:      
+            with open(self.log_file_path, "a") as log_file:
+                log_file.write(f"[ERROR] {message}\n")
 
     def delete_logs(self) -> None:
         try:

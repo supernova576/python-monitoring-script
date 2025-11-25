@@ -1,5 +1,6 @@
 from utils.log import log
 from utils.db import db as DB
+from alerting.mailgunConnector import mailgunConnector
 
 import json
 import os
@@ -7,6 +8,7 @@ import hashlib
 from pathlib import Path
 from sys import exit as adieu
 import traceback
+from datetime import datetime
 
 class fileMonitoring:
     def __init__(self) -> None:
@@ -30,6 +32,16 @@ class fileMonitoring:
                     # if DB cannot be initialized do not exit; keep monitoring functional
                     self.logger.warning("fileMonitoring: Could not initialize DB handler; continuing without DB ingestion.")
                     self.db_conn = None
+
+                # Alerting rule
+                try:
+                    self.alerting_is_active: bool = j["alerting"]["rules"]["fileMonitoring"]["is_active"]
+                except Exception:
+                    self.alerting_is_active = False
+
+                impl = j.get("alerting", {}).get("implementation", {})
+                self.mailgun_alerting_is_active = bool(impl.get("mailgun", {}).get("is_active", False))
+                self.smtp_alerting_is_active = bool(impl.get("smtp", {}).get("is_active", False))
 
             # -------------------------------------------------------
 
@@ -108,21 +120,25 @@ class fileMonitoring:
             self.logger.error("fileMonitoring/__get_file_hashes_from_db: {0}".format(traceback.format_exc()))
             adieu(1)
     
-    def __compare_file_hashes(self, old_hashes: dict, new_hashes: dict) -> None:
+    def __compare_file_hashes(self, old_hashes: dict, new_hashes: dict) -> list:
         try:
             self.logger.info("fileMonitoring: Comparing file hashes...")
-
+            changed = []
             for file in self.files_to_monitor:
-                if old_hashes[file] != new_hashes[file]:
+                old = old_hashes.get(file)
+                new = new_hashes.get(file)
+                if old != new:
                     self.logger.warning(f"fileMonitoring: File {file} has been modified!")
                     if self.db_conn:
-                        self.db_conn.save_file_check(file, new_hashes[file], "true")
+                        self.db_conn.save_file_check(file, new, "true")
+                    changed.append({"path": file, "hash": new})
                 else:
                     self.logger.info(f"fileMonitoring: File {file} is unchanged.")
                     if self.db_conn:
-                        self.db_conn.save_file_check(file, new_hashes[file], "false")
+                        self.db_conn.save_file_check(file, new, "false")
 
             self.logger.info("fileMonitoring: File hash comparison completed.")
+            return changed
         except Exception as e:
             self.logger.error("fileMonitoring/__compare_file_hashes: {0}".format(traceback.format_exc()))
             adieu(1)
@@ -162,8 +178,37 @@ class fileMonitoring:
             old_hashes = self.__get_file_hashes_from_db()
             new_hashes = self.__generate_new_file_hashes()
 
-            self.__compare_file_hashes(old_hashes, new_hashes)
+            changed_files = self.__compare_file_hashes(old_hashes, new_hashes)
             self.__generate_new_file_hash_db(new_hashes)
+
+            # Alerting: if changes detected and alerting enabled, send email
+            try:
+                if changed_files and self.alerting_is_active:
+                    ctx = {
+                        "report_title": "Dateiänderungen entdeckt",
+                        "generated_at": datetime.now().strftime("%Y-%m-%d %H:%M"),
+                        "changed_files": changed_files,
+                        "footer_note": "Automatische Meldung: Dateien wurden geändert."
+                    }
+
+                    # mailgun
+                    if getattr(self, "mailgun_alerting_is_active", False):
+                        try:
+                            mg = mailgunConnector()
+                            mg.mailgunSendMailHTML("Dateiänderungen auf System", "fileMonitoring", ctx)
+                        except Exception:
+                            self.logger.warning(f"fileMonitoring: mailgun send failed: {traceback.format_exc()}")
+
+                    # smtp
+                    if getattr(self, "smtp_alerting_is_active", False):
+                        try:
+                            from alerting.smtpConnector import smtpConnector
+                            smtp = smtpConnector()
+                            smtp.smtpSendMailHTML("Dateiänderungen auf System", "fileMonitoring", ctx)
+                        except Exception:
+                            self.logger.warning(f"fileMonitoring: smtp send failed: {traceback.format_exc()}")
+            except Exception:
+                self.logger.warning(f"fileMonitoring: Failed to send alert: {traceback.format_exc()}")
 
             self.logger.info("fileMonitoring: File checks completed.")
         except Exception as e:
