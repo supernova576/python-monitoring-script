@@ -1,0 +1,7 @@
+requests>=2.0.0
+Jinja2>=3.0
+pandas>=1.0
+matplotlib>=3.0
+tabulate>=0.8
+# Test/runtime helper
+pytest>=7.0

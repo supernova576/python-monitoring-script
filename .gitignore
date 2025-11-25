@@ -1,6 +1,5 @@
 # general Stuff
 testing/
-conf.json
 
 # Pycache
 monitoring/__pycache__/

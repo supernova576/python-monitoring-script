@@ -2,7 +2,7 @@
     "serviceMonitoring": {
         "is_active": true,
         "hostname": "{{ host_name }}",
-        "service_list": ["ssh", "cron"],
+        "service_list": ["cron"],
         "check_internet_connectivity": true,
         "check_dns": true,
         "domain_list": ["example.com", "example.org"]
@@ -41,10 +41,10 @@
     "alerting": {
         "rules": {
             "serviceMonitoring": {
-                "is_active": false
+                "is_active": true
             },
             "hostMonitoring": {
-                "is_active": false,
+                "is_active": true,
                 "thresholds" : {
                     "load_average_1": 2,
                     "load_average_5": 2,
@@ -54,27 +54,27 @@
                 }
             },
             "fileMonitoring": {
-                "is_active": false
+                "is_active": true
             }
         },
         "implementation": {
             "mailgun": {
-                "is_active": true,
-                "webroot": "https://api.mailgun.net/v3/-/messages",
+                "is_active": false,
+                "webroot": "-",
                 "api_key": "-",
                 "recipient": "-",
                 "sender": "Monitoring-Script <monitoring@home.local>"
             },
             "smtp": {
                 "is_active": false,
-                "host": "smtp.example.com",
-                "port": 587,
-                "username": "your-user@example.com",
-                "password": "your-password",
-                "use_tls": true,
+                "host": "smtp.freesmtpservers.com",
+                "port": 25,
+                "username": "",
+                "password": "",
+                "use_tls": false,
                 "use_ssl": false,
                 "recipient": "ops@example.com",
-                "sender": "Monitoring-Script <monitoring@yourdomain.local>"
+                "sender": "Monitoring-Script <monitoring@home.local>"
             }
         }
     }
