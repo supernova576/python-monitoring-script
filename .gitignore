@@ -6,3 +6,11 @@ conf.json
 monitoring/__pycache__/
 utils/__pycache__/
 alerting/__pycache__
+tests/__pycache__
+__pycache__/
+
+# VENV
+.venv/
+
+# pytest
+.pytest*
