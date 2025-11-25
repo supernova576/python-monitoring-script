@@ -1,4 +1,5 @@
 # Python Monitoring Script
+![CI](https://github.com/supernova576/python-monitoring-script/actions/workflows/pytest.yml/badge.svg)
 
 Lightweight Python scripts for simple monitoring tasks: file changes, host availability, and service checks, with local reporting and utilities.
 
@@ -99,6 +100,13 @@ The connectors render the matching template and then send it via Mailgun API and
 
 ## Development
 - Add or modify monitors in `monitoring/` and update `monitor.py` to include new tasks.
+
+**Test Results**
+
+- **CI Badge:** shows the status of the `pytest` workflow. The pipeline uploads a JUnit XML test report artifact named `test-report` on every run.
+- **View latest report:** open the Actions run for the `CI — Pytest` workflow in GitHub to download the `test-report` artifact (JUnit XML) and inspect detailed results.
+
+If you prefer, I can add a workflow step to automatically summarize the latest test results and commit a small summary into this `README.md` (requires `GITHUB_TOKEN` to commit). Ask me to enable that and I'll add it.
 
 If you change or add templates, place them into `alerting/html_templates/` and ensure they follow Jinja2 HTML conventions.
 
