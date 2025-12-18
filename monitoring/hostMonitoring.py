@@ -25,9 +25,11 @@ class hostMonitoring:
                 try:
                     self.alerting_is_active: bool = j["alerting"]["rules"]["hostMonitoring"]["is_active"]
                     self.alerting_thresholds: dict = j["alerting"]["rules"]["hostMonitoring"].get("thresholds", {})
+                    self.hostname: str = j["general"]["hostname"]
                 except Exception:
                     self.alerting_is_active = False
                     self.alerting_thresholds = {}
+                    self.hostname = "N/A"
 
                 impl = j.get("alerting", {}).get("implementation", {})
                 self.mailgun_alerting_is_active = bool(impl.get("mailgun", {}).get("is_active", False))
@@ -204,7 +206,7 @@ class hostMonitoring:
                         if getattr(self, "mailgun_alerting_is_active", False):
                             try:
                                 mg = mailgunConnector()
-                                mg.mailgunSendMailHTML("Host: Schwellenwerte überschritten", "hostMonitoring", ctx)
+                                mg.mailgunSendMailHTML(f"Host {self.hostname}: Schwellenwerte überschritten", "hostMonitoring", ctx)
                             except Exception:
                                 self.logger.warning(f"hostMonitoring: mailgun send failed: {traceback.format_exc()}")
 
@@ -213,7 +215,7 @@ class hostMonitoring:
                             try:
                                 from alerting.smtpConnector import smtpConnector
                                 smtp = smtpConnector()
-                                smtp.smtpSendMailHTML("Host: Schwellenwerte überschritten", "hostMonitoring", ctx)
+                                smtp.smtpSendMailHTML(f"Host {self.hostname}: Schwellenwerte überschritten", "hostMonitoring", ctx)
                             except Exception:
                                 self.logger.warning(f"hostMonitoring: smtp send failed: {traceback.format_exc()}")
                     except Exception:

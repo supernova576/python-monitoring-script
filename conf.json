@@ -1,7 +1,10 @@
 {
+    "general": {
+        "hostname": "{{ host_name }}",
+        "ip": "{{ ip_addr }}"
+    },
     "serviceMonitoring": {
         "is_active": true,
-        "hostname": "{{ host_name }}",
         "service_list": ["cron"],
         "check_internet_connectivity": true,
         "check_dns": true,

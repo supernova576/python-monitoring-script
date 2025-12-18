@@ -23,6 +23,8 @@ class fileMonitoring:
                 self.db_path: str = j["fileMonitoring"]["db_path"]
                 self.files_to_monitor: list = j["fileMonitoring"]["files_to_monitor"]
 
+                self.hostname: str = j["general"]["hostname"]
+
                 self.logger = log()
 
                 # instantiate DB handler (DB may be configured as inactive and will then be a no-op)
@@ -195,7 +197,7 @@ class fileMonitoring:
                     if getattr(self, "mailgun_alerting_is_active", False):
                         try:
                             mg = mailgunConnector()
-                            mg.mailgunSendMailHTML("Dateiänderungen auf System", "fileMonitoring", ctx)
+                            mg.mailgunSendMailHTML(f"Dateiänderungen auf {self.hostname}", "fileMonitoring", ctx)
                         except Exception:
                             self.logger.warning(f"fileMonitoring: mailgun send failed: {traceback.format_exc()}")
 
@@ -204,7 +206,7 @@ class fileMonitoring:
                         try:
                             from alerting.smtpConnector import smtpConnector
                             smtp = smtpConnector()
-                            smtp.smtpSendMailHTML("Dateiänderungen auf System", "fileMonitoring", ctx)
+                            smtp.smtpSendMailHTML(f"Dateiänderungen auf {self.hostname}", "fileMonitoring", ctx)
                         except Exception:
                             self.logger.warning(f"fileMonitoring: smtp send failed: {traceback.format_exc()}")
             except Exception:

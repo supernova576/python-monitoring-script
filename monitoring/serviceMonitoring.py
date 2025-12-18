@@ -21,12 +21,13 @@ class serviceMonitoring:
                 j = json.loads(f.read())
 
                 self.is_active: bool = j["serviceMonitoring"]["is_active"]
-                self.hostname: str = j["serviceMonitoring"]["hostname"]
                 self.apt_service_list: list = j["serviceMonitoring"]["service_list"]
                 self.dns_list: list = j["serviceMonitoring"]["domain_list"]
 
                 self.check_dns: bool = j["serviceMonitoring"]["check_dns"]
                 self.check_internet_connectivity: bool = j["serviceMonitoring"]["check_internet_connectivity"]
+
+                self.hostname: str = j["general"]["hostname"]
 
                 self.logger = log()
 
