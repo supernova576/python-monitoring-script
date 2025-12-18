@@ -21,6 +21,8 @@ def display_help() -> None:
     --file          Run file monitoring
     --all           Run all monitoring modules
 
+    --startup       Notify the startup of a system (only if configured in host monitoring)
+
     Export Options:
     --generate-report   Generate a Markdown-report from the collected data
 
@@ -94,7 +96,12 @@ def main():
             file_monitor = file_module.fileMonitoring()
             file_monitor.delete_file_monitoring_db()
 
-        if not any(arg in sys.argv for arg in ["--service", "--host", "--file", "--all", "--generate-report", "--delete-logs", "--delete-results-service", "--delete-results-file", "--delete-results-host", "--delete-all-results", "--delete-file-monitoring-db"]):
+        if "--startup" in sys.argv:
+            logger.info("Notifying system startup...")
+            host_monitor = host_module.hostMonitoring()
+            host_monitor.notify_startup()
+
+        if not any(arg in sys.argv for arg in ["--service", "--host", "--file", "--all", "--generate-report", "--delete-logs", "--delete-results-service", "--delete-results-file", "--delete-results-host", "--delete-all-results", "--delete-file-monitoring-db", "--startup"]):
             logger.error("No valid monitoring option provided. Use --help for usage information.")
             display_help()
             adieu(1)

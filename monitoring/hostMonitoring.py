@@ -20,6 +20,7 @@ class hostMonitoring:
                 j = json.loads(f.read())
 
                 self.is_active: bool = j["hostMonitoring"]["is_active"]
+                self.notify_on_startup: bool = j["hostMonitoring"].get("notify_on_startup", False)
 
                 # alerting config
                 try:
@@ -233,6 +234,42 @@ class hostMonitoring:
         try:
             self.db_conn.delete_db_data("host_checks")
             self.logger.info("hostMonitoring: Host result files deleted successfully.")
+        except Exception as e:
+            self.logger.error(f"hostMonitoring/delete_host_results: An error occurred while deleting host result files: {e}")
+            adieu(1)
+
+    def notify_startup(self) -> None:
+        try:
+            if not self.notify_on_startup:
+                self.logger.info("hostMonitoring: Startup notification is disabled in conf.json. Exiting notify_startup.")
+                return
+
+            self.logger.info("hostMonitoring: Notifying system startup...")
+
+            ctx = {
+                "report_title": f"Host {self.hostname} gestartet",
+                "generated_at": datetime.now().strftime("%Y-%m-%d %H:%M"),
+                "footer_note": "Automatische Benachrichtigung: Das System wurde gestartet."
+            }
+
+            # mailgun
+            if getattr(self, "mailgun_alerting_is_active", False):
+                try:
+                    mg = mailgunConnector()
+                    mg.mailgunSendMailHTML(f"Systemstart auf {self.hostname}", "hostStartup", ctx)
+                except Exception:
+                    self.logger.warning(f"hostMonitoring: mailgun send failed: {traceback.format_exc()}")
+
+            # smtp
+            if getattr(self, "smtp_alerting_is_active", False):
+                try:
+                    from alerting.smtpConnector import smtpConnector
+                    smtp = smtpConnector()
+                    smtp.smtpSendMailHTML(f"Systemstart auf {self.hostname}", "hostStartup", ctx)
+                except Exception:
+                    self.logger.warning(f"hostMonitoring: smtp send failed: {traceback.format_exc()}")
+
+            self.logger.info("hostMonitoring: Startup notification sent.")
         except Exception as e:
             self.logger.error(f"hostMonitoring/delete_host_results: An error occurred while deleting host result files: {e}")
             adieu(1)

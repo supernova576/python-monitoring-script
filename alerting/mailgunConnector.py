@@ -87,6 +87,9 @@ class mailgunConnector:
                 elif template_id == "fileMonitoring":
                     self.logger.info("matched fileMonitoring template")
                     html = self.__load_html_template_by_name("fileMonitoring.html", template_context)
+                elif template_id == "hostStartup":
+                    self.logger.info("matched hostStartup template")
+                    html = self.__load_html_template_by_name("hostStartup.html", template_context)
                 else:
                     self.logger.warning(f"mailgunConnector: Unknown template_id '{template_id}'. No email sent.")
                     return

@@ -92,6 +92,8 @@ class smtpConnector:
                 filename = "hostMonitoring.html"
             elif template_id == "fileMonitoring":
                 filename = "fileMonitoring.html"
+            elif template_id == "hostStartup":
+                filename = "hostStartup.html"
             else:
                 self.logger.warning(f"smtpConnector: Unknown template_id '{template_id}'. Aborting send.")
                 return
